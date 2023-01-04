@@ -1,19 +1,40 @@
+
 local obfs={}
 
 local function Read(str,sep)
-	local t={}
-        for _str in string.gmatch(str, "([^"..sep.."]+)") do
-                table.insert(t, _str)
-        end
-	return t;
+	if sep == nil then
+      		sep = "%s"
+   	end
+   	local t={}
+   	for _str in string.gmatch(str, "([^"..sep.."]+)") do
+      		table.insert(t, _str)
+   	end
+   	return t;
 end
 
 local function Rdm(len)
 	local _s = ""
 	for i = 1, len do
-		_s = _s .. string.char(math.random(97, 122))
+		_a=string.char(math.random(97, 122))
+		if math.random(2)==1 then _a=_a:upper() end
+		_s = _s .. _a
 	end
 	return _s;
+end
+
+local function split(str, delimiter)
+  local result = {}
+  for line in string.gmatch(str, "[^"..delimiter.."]+") do
+    table.insert(result, line)
+  end
+  return result
+end
+
+local function shuffle(array)
+  for i = #array, 2, -1 do
+    local j = math.random(i)
+    array[i], array[j] = array[j], array[i]
+  end
 end
 
 function obfs.obfuscateVariableNames(s)
@@ -33,32 +54,15 @@ function obfs.obfuscateVariableNames(s)
 	return s;
 end
 
-function obfs.obfuscateMathFunctions(s)
-	if type(s)~='string' then return nil end;
-	for key,_ in pairs(math) do
-		local _splt=Read(s,'math.')
-		local _found=false
-		for _,_v in ipairs(_splt) do 
-			if _v:match(s) then
-				_found=true
-				_splt=_v
-				break
-			end
-		end
-		if _found==true then
-			_splt=Read(_splt,' ')[1]
-			local _vars = Read(_splt,'(')[2]:gsub(')','')
-			_vars=Read(_vars,',')
-			local _args = {}
-			for _,_i in ipairs(_vars) do
-				table.insert(_args,tonumber(_i))
-			end
-			local answer = math[_splt](unpack(_args))
-			local new = '(function()return'..answer..';end)'
-			s=s:gsub(_splt,new)
-		end
-	end
-	return s;
+function obfs.obfuscateFunctions(s)
+	return string.gsub(s, "function", Rdm(30));
+end
+
+function obfs.obfuscateControlFlow(s)
+  	local lines = split(s, "\n")
+  	shuffle(lines)
+  	local obfuscated_script = table.concat(lines, "\n")
+  	return obfuscated_script;
 end
 
 return obfs;
